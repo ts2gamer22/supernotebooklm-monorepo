@@ -23,7 +23,10 @@ export const createAuth = (
     trustedOrigins: [
       "chrome-extension://jegoogflhaohfcclehodbfmpfajkjlem",
       siteUrl, // Allow the Convex site URL itself
-    ],
+      "https://supernotebooklm-monorepo.vercel.app", // Production website
+      "http://localhost:3000", // Local development website
+      process.env.NEXT_PUBLIC_SITE_URL, // Dynamic website URL from env
+    ].filter(Boolean), // Remove any undefined values
     database: authComponent.adapter(ctx),
     socialProviders: {
       google: {
