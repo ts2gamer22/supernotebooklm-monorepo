@@ -67,14 +67,24 @@ export default function UploadDialog({ open, onOpenChange }: UploadDialogProps) 
         .filter(tag => tag.length > 0)
         .slice(0, 10); // Max 10 tags
       
+      // Create content from description (backend requires minimum 50 chars)
+      const content = `# ${formData.title}
+
+${formData.description}
+
+## NotebookLM Link
+[View Original Notebook](${formData.shareLink})
+
+## About
+This notebook was shared from Google NotebookLM. Visit the link above to interact with the full notebook.`;
+      
       // Submit to Convex
       await createNotebook({
         title: formData.title,
         description: formData.description,
-        shareLink: formData.shareLink,
         category: formData.category,
         tags,
-        content: "", // Will be populated by scraper later
+        content,
       });
       
       console.log("✅ Notebook created successfully");

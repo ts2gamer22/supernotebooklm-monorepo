@@ -1,11 +1,17 @@
+"use client";
+
 import NavigationHeader from "@/components/sections/navigation-header";
 import Image from "next/image";
 import Link from "next/link";
-import { Share, Copy, Download, Book, Calendar, User, Tag, ChevronRight, Heart, MessageCircle } from "lucide-react";
+import { Share, Copy, Download, Book, Calendar, User, Tag, ChevronRight, Heart, MessageCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@supernotebooklm/backend";
+import { Id } from "@supernotebooklm/backend";
+import { useEffect } from "react";
 
-// Mock data - in real app, fetch based on params.id
-const notebookData = {
+// Remove mock data - using real Convex data now
+const mockNotebookData = {
   id: "1",
   title: "Introduction to Machine Learning",
   description: "A comprehensive guide covering the fundamentals of machine learning, including supervised learning, unsupervised learning, and reinforcement learning approaches.",
@@ -138,7 +144,63 @@ Machine learning is a rapidly evolving field with endless possibilities. As you 
   ],
 };
 
-export default function NotebookPage() {
+export default function NotebookPage({ params }: { params: { id: string } }) {
+  // Fetch notebook from Convex
+  const notebook = useQuery(api.notebooks.getNotebookById, { 
+    notebookId: params.id as Id<"publicNotebooks">
+  });
+  
+  // Increment view count mutation
+  const incrementView = useMutation(api.notebooks.incrementViewCount);
+  
+  // Increment view count on mount (only once)
+  useEffect(() => {
+    if (notebook) {
+      incrementView({ notebookId: params.id as Id<"publicNotebooks"> }).catch(console.error);
+    }
+  }, [notebook?._id]); // Only run when notebook loads
+  
+  // Fetch related notebooks
+  const relatedNotebooks = useQuery(api.notebooks.getRelatedNotebooks, 
+    notebook ? { notebookId: params.id as Id<"publicNotebooks">, limit: 3 } : "skip"
+  );
+  
+  // Loading state
+  if (notebook === undefined) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <NavigationHeader />
+        <main className="mx-auto max-w-6xl px-6 pt-24 pb-20">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="ml-3 text-sm text-muted-foreground">Loading notebook...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+  
+  // 404 state
+  if (notebook === null) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <NavigationHeader />
+        <main className="mx-auto max-w-6xl px-6 pt-24 pb-20">
+          <div className="text-center py-20">
+            <Book className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h1 className="text-2xl font-medium mb-2">Notebook Not Found</h1>
+            <p className="text-sm text-muted-foreground mb-6">
+              This notebook doesn't exist or has been removed.
+            </p>
+            <Button asChild>
+              <Link href="/notebooks">Browse All Notebooks</Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <NavigationHeader />
@@ -151,37 +213,41 @@ export default function NotebookPage() {
             <ChevronRight className="h-3 w-3" />
             <Link href="/notebooks" className="hover:text-foreground transition-colors">Notebooks</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">{notebookData.title}</span>
+            <span className="text-foreground">{notebook.title}</span>
           </div>
 
-          <h1 className="text-xl font-normal mb-4">{notebookData.title}</h1>
-          <p className="text-sm text-muted-foreground mb-6 max-w-3xl">{notebookData.description}</p>
+          <h1 className="text-xl font-normal mb-4">{notebook.title}</h1>
+          <p className="text-sm text-muted-foreground mb-6 max-w-3xl">{notebook.description}</p>
 
           {/* Metadata Bar */}
           <div className="flex flex-wrap items-center gap-6 text-xs text-muted-foreground font-mono mb-6">
             <div className="flex items-center gap-2">
               <User className="h-3 w-3" />
-              <Link href={notebookData.author.href} className="hover:text-foreground transition-colors">
-                {notebookData.author.name}
-              </Link>
+              <span>Author ID: {notebook.userId.slice(0, 8)}...</span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-3 w-3" />
-              <span>Updated {new Date(notebookData.updatedAt).toLocaleDateString()}</span>
+              <span>Published {new Date(notebook.createdAt).toLocaleDateString()}</span>
             </div>
+            {notebook.updatedAt && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3 w-3" />
+                <span>Updated {new Date(notebook.updatedAt).toLocaleDateString()}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Heart className="h-3 w-3" />
-              <span>{notebookData.likes} likes</span>
+              <span>{notebook.bookmarkCount || 0} likes</span>
             </div>
             <div className="flex items-center gap-2">
               <Book className="h-3 w-3" />
-              <span>{notebookData.views} views</span>
+              <span>{notebook.viewCount} views</span>
             </div>
           </div>
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {notebookData.tags.map((tag) => (
+            {notebook.tags?.map((tag) => (
               <Link
                 key={tag}
                 href={`/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`}
@@ -234,7 +300,7 @@ export default function NotebookPage() {
             <div className="border border-border bg-card p-6 mb-8">
               <div className="prose prose-invert prose-sm max-w-none">
                 <div className="text-sm whitespace-pre-wrap font-mono text-muted-foreground">
-                  {notebookData.content}
+                  {notebook.content}
                 </div>
               </div>
             </div>
@@ -256,50 +322,56 @@ export default function NotebookPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            {/* Author Card */}
+            {/* Notebook Info */}
             <div className="border border-border bg-card p-6 mb-6">
-              <h3 className="text-sm font-medium mb-4">About the Author</h3>
-              <Link href={notebookData.author.href}>
-                <div className="flex items-start gap-3 mb-4">
-                  <Image
-                    src={notebookData.author.avatar}
-                    alt={notebookData.author.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <h4 className="text-sm font-medium hover:underline">{notebookData.author.name}</h4>
-                    <p className="text-xs text-muted-foreground">{notebookData.author.bio}</p>
-                  </div>
+              <h3 className="text-sm font-medium mb-4">Notebook Info</h3>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Category:</span>
+                  <span className="ml-2 font-mono">{notebook.category}</span>
                 </div>
-              </Link>
-              <Button className="w-full rounded-full h-8 text-xs font-mono bg-secondary text-foreground hover:bg-accent">
-                Follow
-              </Button>
+                <div>
+                  <span className="text-muted-foreground">Published:</span>
+                  <span className="ml-2 font-mono">{new Date(notebook.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Views:</span>
+                  <span className="ml-2 font-mono">{notebook.viewCount}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Likes:</span>
+                  <span className="ml-2 font-mono">{notebook.bookmarkCount || 0}</span>
+                </div>
+              </div>
             </div>
 
             {/* Related Notebooks */}
-            <div className="border border-border bg-card p-6">
-              <h3 className="text-sm font-medium mb-4">Related Notebooks</h3>
-              <div className="space-y-4">
-                {notebookData.relatedNotebooks.map((notebook) => (
-                  <Link key={notebook.id} href={notebook.href}>
-                    <div className="border border-border p-3 hover:bg-accent transition-colors">
-                      <h4 className="text-xs font-medium mb-2 line-clamp-2">{notebook.title}</h4>
-                      <p className="text-[10px] text-muted-foreground font-mono mb-2">{notebook.author}</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {notebook.tags.map((tag) => (
-                          <span key={tag} className="text-[10px] font-mono text-muted-foreground">
-                            {tag}
-                          </span>
-                        ))}
+            {relatedNotebooks && relatedNotebooks.length > 0 && (
+              <div className="border border-border bg-card p-6">
+                <h3 className="text-sm font-medium mb-4">Related Notebooks</h3>
+                <div className="space-y-4">
+                  {relatedNotebooks.map((related) => (
+                    <Link key={related._id} href={`/notebook/${related._id}`}>
+                      <div className="border border-border p-3 hover:bg-accent transition-colors">
+                        <h4 className="text-xs font-medium mb-2 line-clamp-2">{related.title}</h4>
+                        <p className="text-[10px] text-muted-foreground mb-2 line-clamp-2">{related.description}</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {related.tags?.slice(0, 2).map((tag) => (
+                            <span key={tag} className="text-[10px] font-mono text-muted-foreground">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-mono">
+                          <span>{related.viewCount} views</span>
+                          <span>{related.bookmarkCount || 0} likes</span>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

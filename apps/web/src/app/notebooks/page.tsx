@@ -2,28 +2,15 @@
 
 import NavigationHeader from "@/components/sections/navigation-header";
 import Link from "next/link";
-import { Book, ChevronRight, TrendingUp, Clock, Heart, Eye } from "lucide-react";
+import { Book, ChevronRight, TrendingUp, Clock, Heart, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { api } from "@supernotebooklm/backend";
 
-// Fallback mock data (used when Convex is not connected)
-const mockCategories = [
-  {
-    id: "ai",
-    name: "AI & Machine Learning",
-    description: "Explore cutting-edge AI research, machine learning algorithms, and neural network architectures",
-    notebookCount: 127,
-    notebooks: [
-      { id: "1", title: "Introduction to Machine Learning", author: "Dr. Sarah Chen", views: 1247, likes: 89, tags: ["ML", "AI"] },
-      { id: "2", title: "Large Language Models Explained", author: "Prof. Michael Torres", views: 2103, likes: 156, tags: ["LLM", "NLP"] },
-    ],
-  },
-];
-
 export default function NotebooksPage() {
-  // Query public notebooks from Convex
-  const publicNotebooks = useQuery(api.notebooks.listPublicNotebooks);
+  // Query public notebooks from Convex - using correct API function
+  const result = useQuery(api.notebooks.getPublicNotebooks, {});
+  const publicNotebooks = result?.notebooks;
   
   // Group notebooks by category
   const categories = publicNotebooks?.reduce((acc, notebook) => {
@@ -36,18 +23,18 @@ export default function NotebooksPage() {
       acc.push({
         id: notebook.category,
         name: notebook.category.charAt(0).toUpperCase() + notebook.category.slice(1),
-        description: `Notebooks in ${notebook.category}`,
+        description: `Explore ${notebook.category} notebooks and research`,
         notebookCount: 1,
         notebooks: [notebook],
       });
     }
     
     return acc;
-  }, [] as any[]) || mockCategories;
+  }, [] as any[]) || [];
   
   const totalNotebooks = categories.reduce((sum, cat) => sum + cat.notebookCount, 0);
-  const isLoading = publicNotebooks === undefined;
-  const isMockData = !publicNotebooks || publicNotebooks.length === 0;
+  const isLoading = result === undefined;
+  const isEmpty = !isLoading && categories.length === 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -61,14 +48,20 @@ export default function NotebooksPage() {
           <span className="text-foreground">Notebooks</span>
         </div>
 
-        {/* Status Banner */}
-        {isMockData && (
-          <div className="mb-6 border border-yellow-500/20 bg-yellow-500/10 p-4 rounded-md">
-            <p className="text-sm text-yellow-600 dark:text-yellow-400 font-mono">
-              ⚠️ Showing mock data. Connect to Convex to see real notebooks.
-              <br />
-              Add <code className="bg-black/20 px-1">NEXT_PUBLIC_CONVEX_URL</code> to <code className="bg-black/20 px-1">.env.local</code>
+        {/* Empty State */}
+        {isEmpty && (
+          <div className="mb-6 border border-border bg-card p-8 rounded-lg text-center">
+            <Book className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-medium mb-2">No Notebooks Published Yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+              Be the first to share your NotebookLM knowledge! Upload your first notebook to get the community started.
             </p>
+            <Button asChild>
+              <Link href="/#upload">
+                <Upload className="h-4 w-4 mr-2" />
+                Publish First Notebook
+              </Link>
+            </Button>
           </div>
         )}
 
@@ -128,73 +121,75 @@ export default function NotebooksPage() {
         </div>
 
         {/* Categories with Notebooks */}
-        <div className="space-y-12">
-          {categories.map((category) => (
-            <div key={category.id}>
-              {/* Category Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-lg font-normal">{category.name}</h2>
-                    <span className="text-xs font-mono text-muted-foreground border border-border px-3 py-1 rounded-full">
-                      {category.notebookCount} notebooks
-                    </span>
+        {!isEmpty && (
+          <div className="space-y-12">
+            {categories.map((category) => (
+              <div key={category.id}>
+                {/* Category Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-lg font-normal">{category.name}</h2>
+                      <span className="text-xs font-mono text-muted-foreground border border-border px-3 py-1 rounded-full">
+                        {category.notebookCount} notebooks
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{category.description}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{category.description}</p>
+                  <Link href={`/category/${category.id}`}>
+                    <Button variant="ghost" className="text-sm font-mono text-muted-foreground hover:text-foreground">
+                      View all
+                      <ChevronRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </Link>
                 </div>
-                <Link href={`/category/${category.id}`}>
-                  <Button variant="ghost" className="text-sm font-mono text-muted-foreground hover:text-foreground">
-                    View all
-                    <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </Link>
-              </div>
 
-              {/* Notebooks Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {category.notebooks.map((notebook) => (
-                  <Link key={notebook.id || notebook._id} href={`/notebook/${notebook.id || notebook._id}`}>
-                    <div className="border border-border bg-card p-4 hover:bg-accent transition-colors h-full">
-                      {/* Notebook Content */}
-                      <div className="flex flex-col h-full">
-                        <h3 className="text-sm font-medium mb-2 line-clamp-2">{notebook.title}</h3>
-                        
-                        {/* Author */}
-                        <p className="text-xs text-muted-foreground font-mono mb-3">
-                          {notebook.author || 'Anonymous'}
-                        </p>
-                        
-                        {/* Tags */}
-                        <div className="flex gap-2 flex-wrap mb-4">
-                          {notebook.tags?.map((tag) => (
-                            <span 
-                              key={tag}
-                              className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-1 rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                        
-                        {/* Stats */}
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono mt-auto">
-                          <div className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            <span>{notebook.views || notebook.viewCount || 0}</span>
+                {/* Notebooks Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {category.notebooks.map((notebook) => (
+                    <Link key={notebook._id} href={`/notebook/${notebook._id}`}>
+                      <div className="border border-border bg-card p-4 hover:bg-accent transition-colors h-full">
+                        {/* Notebook Content */}
+                        <div className="flex flex-col h-full">
+                          <h3 className="text-sm font-medium mb-2 line-clamp-2">{notebook.title}</h3>
+                          
+                          {/* Description preview */}
+                          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                            {notebook.description}
+                          </p>
+                          
+                          {/* Tags */}
+                          <div className="flex gap-2 flex-wrap mb-4">
+                            {notebook.tags?.slice(0, 3).map((tag) => (
+                              <span 
+                                key={tag}
+                                className="text-[10px] font-mono text-muted-foreground border border-border px-2 py-1 rounded-full"
+                              >
+                                {tag}
+                              </span>
+                            ))}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            <span>{notebook.likes || notebook.bookmarkCount || 0}</span>
+                          
+                          {/* Stats */}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono mt-auto">
+                            <div className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              <span>{notebook.viewCount || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" />
+                              <span>{notebook.bookmarkCount || 0}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-border py-10">

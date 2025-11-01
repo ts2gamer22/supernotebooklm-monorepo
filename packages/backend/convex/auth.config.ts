@@ -16,9 +16,9 @@ export default {
       applicationID: "web",
     },
     {
-      // Chrome Extension
+      // Chrome Extension  
       // Extension origin will be like: chrome-extension://abcdefghijklmnop...
-      domain: process.env.EXTENSION_ORIGIN || "chrome-extension://",
+      domain: process.env.EXTENSION_ORIGIN || "http://localhost:3001",
       applicationID: "extension",
     },
   ],

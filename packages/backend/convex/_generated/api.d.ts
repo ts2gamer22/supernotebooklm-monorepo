@@ -9,10 +9,12 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as chats from "../chats.js";
 import type * as debug from "../debug.js";
 import type * as http from "../http.js";
 import type * as moderation from "../moderation.js";
 import type * as notebooks from "../notebooks.js";
+import type * as seed from "../seed.js";
 
 import type {
   ApiFromModules,
@@ -30,10 +32,12 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  chats: typeof chats;
   debug: typeof debug;
   http: typeof http;
   moderation: typeof moderation;
   notebooks: typeof notebooks;
+  seed: typeof seed;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
