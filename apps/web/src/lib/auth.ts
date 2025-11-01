@@ -4,27 +4,20 @@
  * This provides authentication functionality using BetterAuth
  * integrated with our Convex backend.
  * 
- * Multi-client setup: This website shares auth with the Chrome extension.
+ * IMPORTANT: Points directly to Convex site where BetterAuth is hosted.
  */
 
 import { createAuthClient } from "better-auth/react";
 
-// Validate environment variable
-if (!process.env.NEXT_PUBLIC_SITE_URL) {
-  console.warn(
-    "⚠️ NEXT_PUBLIC_SITE_URL is not set.\n" +
-    "Add this to .env.local:\n" +
-    "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
-  );
-}
+// Convex site URL is where BetterAuth is actually running
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site') || 
+                        'https://cheery-salmon-841.convex.site';
 
-// Create auth client
-// baseURL should point to where the API routes are hosted (this site)
+// Create auth client pointing to Convex backend
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000"),
-  // Fetch function that goes through our API proxy
+  baseURL: CONVEX_SITE_URL, // Auth happens on Convex, not on this site
   fetchOptions: {
-    credentials: 'include', // Important for cookies
+    credentials: 'include', // Include cookies for cross-origin
   },
 });
 
