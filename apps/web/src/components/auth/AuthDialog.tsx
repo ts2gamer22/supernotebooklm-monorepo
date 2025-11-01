@@ -21,13 +21,48 @@ export default function AuthDialog({ open, onOpenChange, mode = "signin" }: Auth
       setIsLoading(true);
       setError(null);
       
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: window.location.href,
-      });
+      // Use popup mode instead of redirect to avoid cross-domain cookie issues
+      const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site') || 
+                              'https://cheery-salmon-841.convex.site';
       
-      // Auth will redirect to Google, then back to callbackURL
-      onOpenChange(false);
+      // Build OAuth URL
+      const authUrl = `${CONVEX_SITE_URL}/api/auth/sign-in/social?provider=google&callbackURL=${encodeURIComponent(window.location.origin)}`;
+      
+      // Open in popup window
+      const popup = window.open(
+        authUrl,
+        'google-oauth',
+        'width=600,height=700,left=100,top=100'
+      );
+      
+      if (!popup) {
+        setError("Popup was blocked. Please allow popups for this site.");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Listen for auth completion
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data.type === 'AUTH_SUCCESS') {
+          window.removeEventListener('message', handleMessage);
+          onOpenChange(false);
+          setIsLoading(false);
+          // Reload to update session
+          window.location.reload();
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
+          setIsLoading(false);
+        }
+      }, 500);
+      
     } catch (err) {
       console.error("Auth error:", err);
       setError("Failed to sign in. Please try again.");
