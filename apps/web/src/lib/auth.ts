@@ -19,8 +19,13 @@ if (!process.env.NEXT_PUBLIC_SITE_URL) {
 }
 
 // Create auth client
+// baseURL should point to where the API routes are hosted (this site)
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  baseURL: process.env.NEXT_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000"),
+  // Fetch function that goes through our API proxy
+  fetchOptions: {
+    credentials: 'include', // Important for cookies
+  },
 });
 
 // Export hooks and methods
