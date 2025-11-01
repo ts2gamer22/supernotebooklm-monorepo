@@ -1,0 +1,25 @@
+{
+  "name": "supernotebooklm-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Supernotebooklm monorepo with Chrome extension and Next.js website",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=web",
+    "dev:extension": "turbo dev --filter=@supernotebooklm/chrome-extension",
+    "build": "turbo build",
+    "build:web": "turbo build --filter=web",
+    "build:extension": "turbo build --filter=@supernotebooklm/chrome-extension",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.14.0"
+}

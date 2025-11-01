@@ -1,0 +1,9 @@
+# PNPM Workspace Configuration
+# This defines which directories contain packages in the monorepo
+
+packages:
+  # All apps in the apps/ directory
+  - "apps/*"
+  
+  # All shared packages in the packages/ directory
+  - "packages/*"

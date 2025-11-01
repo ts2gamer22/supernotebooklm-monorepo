@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnp.*
+
+# Testing
+coverage/
+
+# Build outputs
+dist/
+build/
+.next/
+.wxt/
+.output/
+out/
+
+# Environment
+.env
+.env*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Turborepo
+.turbo/
+
+# Misc
+*.tsbuildinfo
+.cache/
+
+.vercel

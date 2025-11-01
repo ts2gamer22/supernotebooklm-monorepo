@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Callback</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 1rem;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.5rem 0;
+    }
+    p {
+      margin: 0;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner"></div>
+    <h1>Completing Sign-In...</h1>
+    <p>Please wait while we finalize your authentication.</p>
+  </div>
+
+  <script>
+    console.log('[Auth Callback] OAuth callback page loaded');
+    console.log('[Auth Callback] Full URL:', window.location.href);
+    
+    // This page is loaded after the OAuth callback from Better Auth
+    // Better Auth's callback endpoint has already processed the OAuth code
+    // and created a session. We just need to notify the opener that auth is complete.
+    
+    // Check if authentication was successful
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    
+    if (window.opener) {
+      if (error) {
+        console.error('[Auth Callback] OAuth error:', error);
+        window.opener.postMessage({
+          type: 'AUTH_ERROR',
+          error: error
+        }, '*');
+      } else {
+        console.log('[Auth Callback] OAuth successful, notifying opener');
+        window.opener.postMessage({
+          type: 'AUTH_SUCCESS'
+        }, '*');
+      }
+      
+      // Close the window after a short delay
+      setTimeout(() => {
+        console.log('[Auth Callback] Closing window');
+        window.close();
+      }, 1000);
+    } else {
+      console.error('[Auth Callback] No opener window found');
+      document.querySelector('.container').innerHTML = 
+        '<h1>⚠️ Error</h1><p>Please close this window and try again.</p>';
+    }
+  </script>
+</body>
+</html>

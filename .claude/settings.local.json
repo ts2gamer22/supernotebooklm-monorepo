@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Admin/Desktop/supernotebooklm/BMAD-METHOD/bmad-core/agents/**)",
+      "Read(//c/Users/Admin/Desktop/supernotebooklm/BMAD-METHOD/.bmad-core/**)",
+      "Read(//c/Users/Admin/Desktop/supernotebooklm/BMAD-METHOD/docs/architecture/**)",
+      "Read(//c/Users/Admin/Desktop/supernotebooklm/**)",
+      "Bash(npx convex deploy)",
+      "Bash(pnpm dev:web:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

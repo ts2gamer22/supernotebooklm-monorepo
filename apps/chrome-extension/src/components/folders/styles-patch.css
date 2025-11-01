@@ -1,0 +1,38 @@
+/* Patch for folder section badges */
+.snlm-folder-tree__header {
+  padding: 16px 16px 12px !important;
+  border-bottom: 1px solid #2d2d2d !important;
+}
+
+.snlm-folder-tree__header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.snlm-folder-tree__section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.snlm-folder-tree__section-badge--folders {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.snlm-folder-tree__subtitle {
+  font-size: 11px !important;
+  color: #9aa0a6 !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  margin-left: 2px;
+}
